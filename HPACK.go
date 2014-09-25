@@ -1,8 +1,10 @@
-package main //for test
+//package main //for test
+package hpack
 
 import (
 	"encoding/hex"
 	"fmt"
+	"huffman"
 )
 
 type Header struct {
@@ -63,8 +65,7 @@ func ParseHeader(index int, table int, buf []byte, isIndexed bool) (name, value 
 	return name, value, cursor
 }
 
-func decode(wire string) []Header {
-	var Headers []Header
+func Decode(wire string) (Headers []map[string]string) {
 	var buf *[]byte
 	nums, err := hex.DecodeString(string(wire))
 	if err != nil {
@@ -110,7 +111,8 @@ func decode(wire string) []Header {
 		if isIncremental {
 			//add to table
 		}
-		Headers = append(Headers, []Header{{name, value}}...)
+		header := map[string]string{name: value}
+		Headers = append(Headers, header)
 	}
 
 	//d := hex.EncodeToString(nums)
@@ -123,6 +125,6 @@ func main() {
 	//fmt.Println(nums)
 	//fmt.Println(ParseIntRepresentation(nums, 5))
 	//decode("ff80000111")
-	fmt.Println(decode("00073a6d6574686f640347455400073a736368656d650468747470000a3a617574686f726974790f7777772e7961686f6f2e636f2e6a7000053a70617468012f"))
-	fmt.Println()
+	fmt.Println(Decode("00073a6d6574686f640347455400073a736368656d650468747470000a3a617574686f726974790f7777772e7961686f6f2e636f2e6a7000053a70617468012f"))
+	fmt.Println(huffman.HUFFMAN_TABLE)
 }
