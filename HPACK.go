@@ -11,24 +11,24 @@ type Header struct {
 	Name, Value string
 }
 
-func ParseIntRepresentation(buf []byte, N byte) (I int, cursor byte) {
-	I = int(buf[0] & ((1 << N) - 1)) // byte could be used as byte
+func ParseIntRepresentation(buf []byte, N byte) (I, cursor uint32) {
+	I = uint32(buf[0] & ((1 << N) - 1)) // byte could be used as byte
 	cursor = 1
 	if I < ((1 << N) - 1) {
 		return I, cursor
 	} else {
 		var M byte = 0
 		for (buf[cursor] & 0x80) > 0 {
-			I += int(buf[cursor]&0x7f) * (1 << M)
+			I += uint32(buf[cursor] & 0x7f * (1 << M))
 			M += 7
 			cursor += 1
 		}
-		I += int(buf[cursor]&0x7f) * (1 << M)
+		I += uint32(buf[cursor] & 0x7f * (1 << M))
 		return I, cursor + 1
 	}
 }
 
-func ExtractContent(buf []byte, length int, isHuffman bool) (content string) {
+func ExtractContent(buf []byte, length uint32, isHuffman bool) (content string) {
 	if isHuffman {
 		return content
 	} else {
@@ -37,19 +37,19 @@ func ExtractContent(buf []byte, length int, isHuffman bool) (content string) {
 	}
 }
 
-func ParseFromByte(buf []byte) (content string, cursor byte) {
+func ParseFromByte(buf []byte) (content string, cursor uint32) {
 	isHuffman := false
 	if buf[0]&0x80 > 0 {
 		isHuffman = true
 	}
 	length, cursor := ParseIntRepresentation(buf, 7)
 	content = ExtractContent(buf[cursor:], length, isHuffman)
-	cursor += byte(length)
+	cursor += length
 	return content, cursor
 }
 
-func ParseHeader(index int, table int, buf []byte, isIndexed bool) (name, value string, cursor byte) {
-	if c := byte(0); !isIndexed {
+func ParseHeader(index uint32, table int, buf []byte, isIndexed bool) (name, value string, cursor uint32) {
+	if c := uint32(0); !isIndexed {
 		if index == 0 {
 			name, c = ParseFromByte(buf[cursor:])
 			cursor += c
@@ -73,15 +73,14 @@ func Decode(wire string) (Headers []map[string]string) {
 	}
 	buf = &nums
 
-	var cursor byte = 0
-	for cursor < byte(len(nums)) {
+	var cursor uint32 = 0
+	for cursor < uint32(len(nums)) {
 		isIndexed := false
 		isIncremental := false
-		var index int
-		var c byte
+		var index, c uint32
 		if (*buf)[cursor]&0xe0 == 0x20 {
 			// 7.3 Header Table Size Update
-			cursor = 1
+			c = 1
 		} else if ((*buf)[cursor] & 0x80) > 0 {
 			// 7.1 Indexed Header Field
 			if ((*buf)[cursor] & 0x7f) == 0 {
