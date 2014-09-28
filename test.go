@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hpack"
 	"io/ioutil"
+	"os"
 	"reflect"
 )
 
@@ -18,10 +19,6 @@ type Case struct {
 	Seqno   int
 	Wire    string
 	Headers []map[string]string
-}
-
-type Header struct {
-	Name, Value string
 }
 
 var TESTCASE = []string{
@@ -42,14 +39,28 @@ func main() {
 			}
 			var jsontype jsonobject
 			json.Unmarshal(data, &jsontype)
+			storyPass := true
 			for _, seq := range jsontype.Cases {
+				//fmt.Printf("%d\n", len(seq.Wire))
 				Headers := hpack.Decode(seq.Wire)
-				if reflect.DeepEqual(seq.Headers, Headers) {
-					fmt.Println("Pass in", f.Name())
-				} else {
+				testHeaders := []hpack.Header{}
+				for _, dict := range seq.Headers {
+					for k, v := range dict {
+						testHeaders = append(testHeaders, hpack.Header{k, v})
+					}
+				}
+
+				if !reflect.DeepEqual(testHeaders, Headers) {
+					storyPass = false
 					fmt.Println("False in", f.Name(), "at seq", seq.Seqno)
+					fmt.Println(Headers)
+					fmt.Println(testHeaders)
+					os.Exit(-1)
 					break
 				}
+			}
+			if storyPass {
+				fmt.Println("Pass in", f.Name())
 			}
 		}
 	}
