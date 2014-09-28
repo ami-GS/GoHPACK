@@ -1,8 +1,4 @@
-package main
-
-import (
-	"fmt"
-)
+package hpack
 
 type Header struct {
 	Name, Value string
@@ -75,7 +71,3 @@ var STATIC_TABLE *[]Header = &[]Header{
 var STATIC_TABLE_NUM int = len(*STATIC_TABLE)
 
 //var NAME_TABLE = [header[0} for header in STATIC_TABLE]
-
-func main() {
-	fmt.Println(STATIC_TABLE)
-}

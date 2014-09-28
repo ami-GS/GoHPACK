@@ -7,10 +7,6 @@ import (
 	"huffman"
 )
 
-type Header struct {
-	Name, Value string
-}
-
 func ParseIntRepresentation(buf []byte, N byte) (I, cursor uint32) {
 	I = uint32(buf[0] & ((1 << N) - 1)) // byte could be used as byte
 	cursor = 1
@@ -43,6 +39,9 @@ func ParseFromByte(buf []byte) (content string, cursor uint32) {
 		isHuffman = true
 	}
 	length, cursor := ParseIntRepresentation(buf, 7)
+	//if length == 280 && isHuffman {
+	//	length = 792
+	//}
 	content = ExtractContent(buf[cursor:], length, isHuffman)
 	cursor += length
 	return content, cursor
@@ -65,7 +64,7 @@ func ParseHeader(index uint32, table int, buf []byte, isIndexed bool) (name, val
 	return name, value, cursor
 }
 
-func Decode(wire string) (Headers []map[string]string) {
+func Decode(wire string) (Headers []Header) {
 	var buf *[]byte
 	nums, err := hex.DecodeString(string(wire))
 	if err != nil {
@@ -110,8 +109,7 @@ func Decode(wire string) (Headers []map[string]string) {
 		if isIncremental {
 			//add to table
 		}
-		header := map[string]string{name: value}
-		Headers = append(Headers, header)
+		Headers = append(Headers, Header{name, value})
 	}
 
 	//d := hex.EncodeToString(nums)
