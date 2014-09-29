@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"hpack"
+	"huffman"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -23,10 +24,12 @@ type Case struct {
 
 var TESTCASE = []string{
 	"hpack-test-case/haskell-http2-naive/",
-	//"hpack-test-case/haskell-http2-naive-huffman",
+	//"hpack-test-case/haskell-http2-naive-huffman/",
 }
 
 func main() {
+	root := &huffman.Node{nil, nil, -1}
+	root.CreateTree()
 	for _, testCase := range TESTCASE {
 		files, err := ioutil.ReadDir(testCase)
 		if err != nil {
@@ -49,7 +52,6 @@ func main() {
 						testHeaders = append(testHeaders, hpack.Header{k, v})
 					}
 				}
-
 				if !reflect.DeepEqual(testHeaders, Headers) {
 					storyPass = false
 					fmt.Println("False in", f.Name(), "at seq", seq.Seqno)

@@ -1,8 +1,13 @@
 package huffman
 
 type HuffmanCode struct {
-	code    uint32
-	byteLen byte
+	Code   uint32
+	BitLen byte
+}
+
+type Node struct {
+	Left, Right *Node
+	Code        int16
 }
 
 var HUFFMAN_TABLE *[257]HuffmanCode = &[257]HuffmanCode{
@@ -263,4 +268,28 @@ var HUFFMAN_TABLE *[257]HuffmanCode = &[257]HuffmanCode{
 	{0x7fffff0, 27},
 	{0x3ffffee, 26},
 	{0x3fffffff, 30},
+}
+
+func (root *Node) CreateTree() {
+	for code, huff := range HUFFMAN_TABLE {
+		cursor := root
+		for i := huff.BitLen; i > 0; i-- {
+			if huff.Code&(1<<(i-1)) > 0 {
+				if cursor.Right == nil {
+					cursor.Right = &Node{nil, nil, -1}
+				}
+				cursor = cursor.Right
+			} else {
+				if cursor.Left == nil {
+					cursor.Left = &Node{nil, nil, -1}
+				}
+				cursor = cursor.Left
+			}
+		}
+		cursor.Code = int16(code)
+	}
+}
+
+func Decode(buf []byte, length uint32) (content string) {
+	return
 }
