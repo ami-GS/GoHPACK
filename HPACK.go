@@ -59,6 +59,11 @@ func ParseHeader(index uint32, table int, buf []byte, isIndexed bool) (name, val
 
 	if index > 0 {
 		//get header from table
+		header := GetHeader(index)
+		name = header.Name
+		if len(value) == 0 {
+			value = header.Value
+		}
 	}
 
 	return name, value, cursor
@@ -113,7 +118,6 @@ func Decode(wire string) (Headers []Header) {
 	}
 
 	//d := hex.EncodeToString(nums)
-	//fmt.Println(d)
 	return Headers
 }
 

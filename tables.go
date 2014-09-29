@@ -4,6 +4,32 @@ type Header struct {
 	Name, Value string
 }
 
+func FindHeader(name, value string) (bool, int) {
+	h := Header{name, value}
+	for i, header := range *STATIC_TABLE {
+		if header == h {
+			return true, i
+		} else if header.Name == name {
+			return false, i
+		} else {
+			return false, -1
+		}
+	}
+	return false, -1
+}
+
+var currentEntryNum byte = 0
+
+func GetHeader(index uint32) Header {
+	if 0 < index && index < uint32(STATIC_TABLE_NUM) {
+		return (*STATIC_TABLE)[index]
+	} else if uint32(STATIC_TABLE_NUM) <= index && index <= uint32(STATIC_TABLE_NUM+currentEntryNum) {
+		return Header{"", ""} //from Header Table
+	} else {
+		panic("error")
+	}
+}
+
 var STATIC_TABLE *[]Header = &[]Header{
 	{"", ""},
 	{":authority", ""},
@@ -68,6 +94,6 @@ var STATIC_TABLE *[]Header = &[]Header{
 	{"via", ""},
 	{"www-authenticate", ""},
 }
-var STATIC_TABLE_NUM int = len(*STATIC_TABLE)
+var STATIC_TABLE_NUM byte = byte(len(*STATIC_TABLE))
 
 //var NAME_TABLE = [header[0} for header in STATIC_TABLE]
