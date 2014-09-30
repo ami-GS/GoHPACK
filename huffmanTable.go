@@ -270,6 +270,8 @@ var HUFFMAN_TABLE *[257]HuffmanCode = &[257]HuffmanCode{
 	{0x3fffffff, 30},
 }
 
+var Root Node = Node{nil, nil, -1}
+
 func (root *Node) CreateTree() {
 	for code, huff := range HUFFMAN_TABLE {
 		cursor := root
@@ -290,6 +292,20 @@ func (root *Node) CreateTree() {
 	}
 }
 
-func Decode(buf []byte, length uint32) (content string) {
-	return
+func (root *Node) Decode(buf []byte, length uint32) (content string) {
+	cursor := root
+	for i := 0; uint32(i) < length; i++ {
+		for j := 7; j >= 0; j-- {
+			if buf[i]&(1<<byte(j)) > 0 {
+				cursor = cursor.Right
+			} else {
+				cursor = cursor.Left
+			}
+			if cursor.Code >= 0 {
+				content += string(cursor.Code)
+				cursor = root
+			}
+		}
+	}
+	return content
 }

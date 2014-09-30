@@ -26,7 +26,7 @@ func ParseIntRepresentation(buf []byte, N byte) (I, cursor uint32) {
 
 func ExtractContent(buf []byte, length uint32, isHuffman bool) (content string) {
 	if isHuffman {
-		return content
+		return huffman.Root.Decode(buf, length)
 	} else {
 		content = string(buf[:length])
 		return content

@@ -24,12 +24,11 @@ type Case struct {
 
 var TESTCASE = []string{
 	"hpack-test-case/haskell-http2-naive/",
-	//"hpack-test-case/haskell-http2-naive-huffman/",
+	"hpack-test-case/haskell-http2-naive-huffman/",
 }
 
 func main() {
-	root := &huffman.Node{nil, nil, -1}
-	root.CreateTree()
+	huffman.Root.CreateTree()
 	for _, testCase := range TESTCASE {
 		files, err := ioutil.ReadDir(testCase)
 		if err != nil {
