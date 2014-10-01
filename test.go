@@ -25,6 +25,10 @@ type Case struct {
 var TESTCASE = []string{
 	"hpack-test-case/haskell-http2-naive/",
 	"hpack-test-case/haskell-http2-naive-huffman/",
+	"hpack-test-case/haskell-http2-static/",
+	"hpack-test-case/haskell-http2-static-huffman/",
+	"hpack-test-case/haskell-http2-linear/",
+	"hpack-test-case/haskell-http2-linear-huffman/",
 }
 
 func main() {
