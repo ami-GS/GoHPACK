@@ -112,7 +112,7 @@ func Decode(wire string) (Headers []Header) {
 		cursor += c
 
 		if isIncremental {
-			//add to table
+			AddHeader(Header{name, value})
 		}
 		Headers = append(Headers, Header{name, value})
 	}

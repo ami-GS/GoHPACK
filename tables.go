@@ -4,6 +4,10 @@ type Header struct {
 	Name, Value string
 }
 
+func (h Header) size() uint32 {
+	return uint32(len(h.Name + h.Value))
+}
+
 func FindHeader(name, value string) (bool, int) {
 	h := Header{name, value}
 	for i, header := range *STATIC_TABLE {
@@ -11,23 +15,88 @@ func FindHeader(name, value string) (bool, int) {
 			return true, i
 		} else if header.Name == name {
 			return false, i
-		} else {
-			return false, -1
 		}
 	}
-	return false, -1
-}
 
-var currentEntryNum byte = 0
+	ring := head
+	for i := 0; i < int(currentEntryNum); i++ {
+		if ring.header == h {
+			return true, i + int(STATIC_TABLE_NUM)
+		} else if ring.header.Name == name {
+			return false, i + int(STATIC_TABLE_NUM)
+		}
+		ring = ring.Next
+	}
+	return false, -1
+
+}
 
 func GetHeader(index uint32) Header {
 	if 0 < index && index < uint32(STATIC_TABLE_NUM) {
 		return (*STATIC_TABLE)[index]
-	} else if uint32(STATIC_TABLE_NUM) <= index && index <= uint32(STATIC_TABLE_NUM+currentEntryNum) {
-		return Header{"", ""} //from Header Table
+	} else if uint32(STATIC_TABLE_NUM) <= index && index <= uint32(STATIC_TABLE_NUM+byte(currentEntryNum)) {
+		return getFromHeaderTable(index) //from Header Table
 	} else {
 		panic("error")
 	}
+}
+
+type RingTable struct {
+	header    Header
+	Next, Pre *RingTable
+}
+
+var ringTable RingTable
+var head *RingTable = &ringTable //*RingTalbe = &RingTable{Header{"", ""}, ringTable, nil}
+var tail *RingTable = &ringTable //*RingTable = &RingTable{Header{"", ""}, nil, ringTable}
+
+var HeaderTable *[]Header
+var currentEntryNum uint16 = 0
+var currentEntrySize uint32 = 0
+var headerTableSize uint32 = 4096
+
+func getFromHeaderTable(index uint32) Header {
+	//return (*HeaderTable)[index-uint32(STATIC_TABLE_NUM)]
+	index -= uint32(STATIC_TABLE_NUM)
+	ring := head.Next
+	for i := uint32(0); i < index; i++ {
+		ring = ring.Next
+	}
+	return ring.header
+}
+
+var nilElem *RingTable
+
+func delLast() {
+	currentEntrySize -= tail.Pre.header.size()
+	tail.Pre = tail.Pre.Pre
+	currentEntryNum--
+}
+
+func insertFirst(header Header) {
+	//here should be refactored
+	elem := RingTable{header, head.Next, nil}
+	if currentEntryNum >= 1 {
+		head.Next.Pre = &elem
+	}
+	head.Next = &elem
+
+	if currentEntryNum == 1 {
+		tail.Pre = &elem
+	}
+	currentEntrySize += header.size()
+	currentEntryNum++
+}
+
+func AddHeader(header Header) {
+	for currentEntrySize+header.size() > headerTableSize {
+		delLast()
+	}
+	insertFirst(header)
+}
+
+func SetMaxHeaderTableSize(size uint32) {
+	headerTableSize = size
 }
 
 var STATIC_TABLE *[]Header = &[]Header{
@@ -95,5 +164,3 @@ var STATIC_TABLE *[]Header = &[]Header{
 	{"www-authenticate", ""},
 }
 var STATIC_TABLE_NUM byte = byte(len(*STATIC_TABLE))
-
-//var NAME_TABLE = [header[0} for header in STATIC_TABLE]
