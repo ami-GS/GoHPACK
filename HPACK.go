@@ -22,6 +22,10 @@ func PackIntRepresentation(I uint32, N byte) (buf *[]byte) {
 	}
 }
 
+func Encode(Headers []Header) (Wire string) {
+	return
+}
+
 func ParseIntRepresentation(buf []byte, N byte) (I, cursor uint32) {
 	I = uint32(buf[0] & ((1 << N) - 1)) // byte could be used as byte
 	cursor = 1
@@ -94,9 +98,9 @@ func Decode(wire string) (Headers []Header) {
 		var index, c uint32
 		if (*buf)[cursor]&0xe0 == 0x20 {
 			// 7.3 Header Table Size Update
-			size, _ := ParseIntRepresentation((*buf)[cursor:], 5)
+			size, c := ParseIntRepresentation((*buf)[cursor:], 5)
 			SetMaxHeaderTableSize(size)
-			cursor += 1
+			cursor += c
 		}
 
 		if ((*buf)[cursor] & 0x80) > 0 {
