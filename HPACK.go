@@ -15,21 +15,20 @@ func ParseIntRepresentation(buf []byte, N byte) (I, cursor uint32) {
 	} else {
 		var M byte = 0
 		for (buf[cursor] & 0x80) > 0 {
-			I += uint32(buf[cursor] & 0x7f * (1 << M))
+			I += uint32(buf[cursor]&0x7f) * (1 << M)
 			M += 7
 			cursor += 1
 		}
-		I += uint32(buf[cursor] & 0x7f * (1 << M))
+		I += uint32(buf[cursor]&0x7f) * (1 << M)
 		return I, cursor + 1
 	}
 }
 
-func ExtractContent(buf []byte, length uint32, isHuffman bool) (content string) {
+func ExtractContent(buf []byte, length uint32, isHuffman bool) string {
 	if isHuffman {
 		return huffman.Root.Decode(buf, length)
 	} else {
-		content = string(buf[:length])
-		return content
+		return string(buf[:length])
 	}
 }
 
@@ -39,15 +38,12 @@ func ParseFromByte(buf []byte) (content string, cursor uint32) {
 		isHuffman = true
 	}
 	length, cursor := ParseIntRepresentation(buf, 7)
-	//if length == 280 && isHuffman {
-	//	length = 792
-	//}
 	content = ExtractContent(buf[cursor:], length, isHuffman)
 	cursor += length
 	return content, cursor
 }
 
-func ParseHeader(index uint32, table int, buf []byte, isIndexed bool) (name, value string, cursor uint32) {
+func ParseHeader(index uint32, buf []byte, isIndexed bool) (name, value string, cursor uint32) {
 	if c := uint32(0); !isIndexed {
 		if index == 0 {
 			name, c = ParseFromByte(buf[cursor:])
@@ -58,7 +54,6 @@ func ParseHeader(index uint32, table int, buf []byte, isIndexed bool) (name, val
 	}
 
 	if index > 0 {
-		//get header from table
 		header := GetHeader(index)
 		name = header.Name
 		if len(value) == 0 {
@@ -84,8 +79,12 @@ func Decode(wire string) (Headers []Header) {
 		var index, c uint32
 		if (*buf)[cursor]&0xe0 == 0x20 {
 			// 7.3 Header Table Size Update
-			c = 1
-		} else if ((*buf)[cursor] & 0x80) > 0 {
+			size, _ := ParseIntRepresentation((*buf)[cursor:], 5)
+			SetMaxHeaderTableSize(size)
+			cursor += 1
+		}
+
+		if ((*buf)[cursor] & 0x80) > 0 {
 			// 7.1 Indexed Header Field
 			if ((*buf)[cursor] & 0x7f) == 0 {
 				panic('a')
@@ -107,8 +106,7 @@ func Decode(wire string) (Headers []Header) {
 		}
 		cursor += c
 
-		table := 1 //for test
-		name, value, c := ParseHeader(index, table, (*buf)[cursor:], isIndexed)
+		name, value, c := ParseHeader(index, (*buf)[cursor:], isIndexed)
 		cursor += c
 
 		if isIncremental {
