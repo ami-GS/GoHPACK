@@ -7,6 +7,21 @@ import (
 	"huffman"
 )
 
+func PackIntRepresentation(I uint32, N byte) (buf *[]byte) {
+	if I < uint32(1<<N)-1 {
+		return &[]byte{byte(I)}
+	} else {
+		buf = &[]byte{byte(1<<N) - 1}
+		I -= uint32(1<<N) - 1
+		for I >= 0x80 {
+			*buf = append(*buf, byte(I)&0x7f|0x80)
+			I = (I >> 7)
+		}
+		*buf = append(*buf, byte(I))
+		return buf
+	}
+}
+
 func ParseIntRepresentation(buf []byte, N byte) (I, cursor uint32) {
 	I = uint32(buf[0] & ((1 << N) - 1)) // byte could be used as byte
 	cursor = 1
