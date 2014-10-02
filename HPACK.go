@@ -40,7 +40,7 @@ func ParseFromByte(buf []byte) (content string, cursor uint32) {
 	length, cursor := ParseIntRepresentation(buf, 7)
 	content = ExtractContent(buf[cursor:], length, isHuffman)
 	cursor += length
-	return content, cursor
+	return
 }
 
 func ParseHeader(index uint32, buf []byte, isIndexed bool) (name, value string, cursor uint32) {
@@ -55,13 +55,13 @@ func ParseHeader(index uint32, buf []byte, isIndexed bool) (name, value string, 
 
 	if index > 0 {
 		header := GetHeader(index)
+
 		name = header.Name
 		if len(value) == 0 {
 			value = header.Value
 		}
 	}
-
-	return name, value, cursor
+	return
 }
 
 func Decode(wire string) (Headers []Header) {
@@ -109,14 +109,14 @@ func Decode(wire string) (Headers []Header) {
 		name, value, c := ParseHeader(index, (*buf)[cursor:], isIndexed)
 		cursor += c
 
+		header := Header{name, value}
 		if isIncremental {
-			AddHeader(Header{name, value})
+			AddHeader(header)
 		}
-		Headers = append(Headers, Header{name, value})
+		Headers = append(Headers, header)
 	}
 
-	//d := hex.EncodeToString(nums)
-	return Headers
+	return
 }
 
 func main() {
