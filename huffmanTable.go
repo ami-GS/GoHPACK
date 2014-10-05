@@ -292,6 +292,24 @@ func (root *Node) CreateTree() {
 	}
 }
 
+func (root *Node) Encode(content string) (dist string, length uint32) {
+	var hContent uint32 = 0
+	asciis := []byte(content)
+	for _, ascii := range asciis {
+		hContent <<= HUFFMAN_TABLE[ascii].BitLen
+		hContent |= HUFFMAN_TABLE[ascii].Code
+		length += uint32(HUFFMAN_TABLE[ascii].BitLen)
+	}
+
+	endPad := (8 - (length % 8)) % 8
+	if endPad > 0 {
+		hContent <<= endPad
+		hContent |= ((1 << endPad) - 1)
+		length += endPad
+	}
+	return
+}
+
 func (root *Node) Decode(buf []byte, length uint32) (content string) {
 	cursor := root
 	for i := 0; uint32(i) < length; i++ {

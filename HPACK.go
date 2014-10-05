@@ -22,7 +22,78 @@ func PackIntRepresentation(I uint32, N byte) (buf *[]byte) {
 	}
 }
 
-func Encode(Headers []Header) (Wire string) {
+func PackContent(content string, toHuffman bool) string {
+	if len(content) == 0 {
+		if toHuffman {
+			return "80"
+		} else {
+			return "00"
+		}
+	}
+
+	Wire := ""
+	if toHuffman {
+		encoded, length := huffman.Root.Encode(content)
+		intRep := PackIntRepresentation(uint32(length), 7)
+		(*intRep)[0] |= 0x80
+		Wire += hex.EncodeToString(*intRep) + encoded
+	} else {
+		intRep := PackIntRepresentation(uint32(len(content)), 7)
+		Wire += hex.EncodeToString(*intRep) + hex.EncodeToString([]byte(content))
+	}
+	return Wire
+}
+
+func Encode(Headers []Header, fromStaticTable, fromHeaderTable, toHuffman bool, headerTableSize int) (Wire string) {
+	if headerTableSize != -1 {
+		intRep := PackIntRepresentation(uint32(headerTableSize), 5)
+		(*intRep)[0] |= 0x20
+		Wire += hex.EncodeToString(*intRep)
+	}
+
+	for _, header := range Headers {
+		match, index := FindHeader(header)
+		if fromStaticTable && match {
+			var indexLen, mask byte
+			var content string
+			if fromHeaderTable {
+				indexLen = 7
+				mask = 0x80
+				content = ""
+			} else {
+				indexLen = 4
+				mask = 0x00
+				content = PackContent(header.Value, toHuffman)
+			}
+			intRep := PackIntRepresentation(uint32(index), indexLen)
+			(*intRep)[0] |= mask
+			Wire += hex.EncodeToString(*intRep) + content
+		} else if fromStaticTable && !match && index > 0 {
+			var indexLen, mask byte
+			if fromHeaderTable {
+				indexLen = 6
+				mask = 0x40
+				AddHeader(header)
+			} else {
+				indexLen = 4
+				mask = 0x00
+			}
+			intRep := PackIntRepresentation(uint32(index), indexLen)
+			(*intRep)[0] |= mask
+			Wire += hex.EncodeToString(*intRep) + PackContent(header.Value, toHuffman)
+		} else {
+			var prefix string
+			if fromHeaderTable {
+				prefix = "40"
+				AddHeader(header)
+			} else {
+				prefix = "00"
+			}
+			content := PackContent(header.Name, toHuffman) + PackContent(header.Value, toHuffman)
+			Wire += prefix + content
+		}
+	}
+
 	return
 }
 
