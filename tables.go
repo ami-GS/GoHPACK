@@ -8,27 +8,36 @@ func (h Header) size() uint32 {
 	return uint32(len(h.Name + h.Value))
 }
 
-func FindHeader(name, value string) (bool, int) {
-	h := Header{name, value}
+func FindHeader(h Header) (match bool, index int) {
+	//here should be optimized
+	preName := ""
 	for i, header := range *STATIC_TABLE {
 		if header == h {
 			return true, i
-		} else if header.Name == name {
-			return false, i
+		} else if header.Name == h.Name && index == 0 {
+			preName = header.Name
+			index = i
+			match = false
+		} else if index != 0 && preName != header.Name {
+			return match, index
 		}
 	}
 
 	ring := head
 	for i := 0; i < int(currentEntryNum); i++ {
 		if ring.header == h {
-			return true, i + int(STATIC_TABLE_NUM)
-		} else if ring.header.Name == name {
-			return false, i + int(STATIC_TABLE_NUM)
+			return true, i
+		} else if ring.header.Name == h.Name && index == 0 {
+			match = false
+			index = i + int(STATIC_TABLE_NUM)
 		}
 		ring = ring.Next
 	}
-	return false, -1
-
+	if index > 0 {
+		return match, index
+	} else {
+		return false, -1
+	}
 }
 
 func GetHeader(index uint32) Header {
@@ -56,7 +65,6 @@ var currentEntrySize uint32 = 0
 var headerTableSize uint32 = 4096
 
 func getFromHeaderTable(index uint32) Header {
-	//return (*HeaderTable)[index-uint32(STATIC_TABLE_NUM)]
 	index -= uint32(STATIC_TABLE_NUM)
 	ring := head.Next
 	for i := uint32(0); i < index; i++ {
