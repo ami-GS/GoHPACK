@@ -96,6 +96,25 @@ func main() {
 						break
 					}
 				}
+			} else if args[1] == "-a" {
+				for _, seq := range jsontype.Cases {
+					Headers := []hpack.Header{}
+					for _, dict := range seq.Headers {
+						for k, v := range dict {
+							Headers = append(Headers, hpack.Header{k, v})
+						}
+					}
+					Wire := hpack.Encode(Headers, fStatic, fHeader, isHuffman, -1)
+					distHeaders := hpack.Decode(Wire)
+					if !reflect.DeepEqual(distHeaders, Headers) {
+						storyPass = false
+						fmt.Println("False in", testCase+f.Name(), "at seq", seq.Seqno)
+						fmt.Println(distHeaders)
+						fmt.Println(Headers)
+						os.Exit(-1)
+						break
+					}
+				}
 			} else {
 				fmt.Println("argument should be '-e' or '-d' or none")
 				os.Exit(-1)
