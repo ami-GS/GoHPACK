@@ -26,7 +26,7 @@ func FindHeader(h Header) (match bool, index int) {
 	ring := head
 	for i := 0; i < int(currentEntryNum); i++ {
 		if ring.header == h {
-			return true, i
+			return true, i + int(STATIC_TABLE_NUM)
 		} else if ring.header.Name == h.Name && index == 0 {
 			match = false
 			index = i + int(STATIC_TABLE_NUM)
