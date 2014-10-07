@@ -33,21 +33,56 @@ var TESTCASE = []string{
 	"hpack-test-case/haskell-http2-linear-huffman/",
 }
 
+func EncType(testCase string) (fStatic, fHeader, isHuffman bool) {
+	fHeader = strings.Contains(testCase, "linear")
+	if fHeader {
+		fStatic = true
+	} else {
+		fStatic = strings.Contains(testCase, "static")
+	}
+	isHuffman = strings.Contains(testCase, "huffman")
+	return
+}
+
+func convertHeader(headers []map[string]string) (dist []hpack.Header) {
+	for _, dict := range headers {
+		for k, v := range dict {
+			dist = append(dist, hpack.Header{k, v})
+		}
+	}
+	return
+}
+
+func compHeaders(decoded, correct []hpack.Header, storyPass *bool) {
+	if !reflect.DeepEqual(correct, decoded) {
+		*storyPass = false
+		if len(os.Args) == 3 && os.Args[2] == "-v" {
+			fmt.Println(decoded)
+			fmt.Println(correct)
+		}
+		//os.Exit(-1)
+	}
+}
+
+func compWire(encoded, correct string, storyPass *bool) {
+	if encoded != correct {
+		*storyPass = false
+		if len(os.Args) == 3 && os.Args[2] == "-v" {
+			fmt.Println(encoded)
+			fmt.Println(correct)
+		}
+		//os.Exit(-1)
+	}
+
+}
+
 func main() {
 	fmt.Println(hex.EncodeToString(*hpack.PackIntRepresentation(3000000, 5)))
 	nums, _ := hex.DecodeString(string("1fa18db701"))
 	fmt.Println(hpack.ParseIntRepresentation(nums, 5))
 	huffman.Root.CreateTree()
-	args := os.Args
-	var fStatic, fHeader, isHuffman bool
 	for _, testCase := range TESTCASE {
-		fHeader = strings.Contains(testCase, "linear")
-		if fHeader {
-			fStatic = true
-		} else {
-			fStatic = strings.Contains(testCase, "static")
-		}
-		isHuffman = strings.Contains(testCase, "huffman")
+		fStatic, fHeader, isHuffman := EncType(testCase)
 		files, err := ioutil.ReadDir(testCase)
 		if err != nil {
 			panic(err)
@@ -60,63 +95,39 @@ func main() {
 			var jsontype jsonobject
 			json.Unmarshal(data, &jsontype)
 			storyPass := true
-			if len(args) == 1 || args[1] == "-d" {
+
+			if len(os.Args) >= 2 && os.Args[1] == "-d" {
 				for _, seq := range jsontype.Cases {
 					Headers := hpack.Decode(seq.Wire)
-					testHeaders := []hpack.Header{}
-					for _, dict := range seq.Headers {
-						for k, v := range dict {
-							testHeaders = append(testHeaders, hpack.Header{k, v})
-						}
-					}
-					if !reflect.DeepEqual(testHeaders, Headers) {
-						storyPass = false
+					correctHeaders := convertHeader(seq.Headers)
+					compHeaders(Headers, correctHeaders, &storyPass)
+					if !storyPass {
 						fmt.Println("False in", testCase+f.Name(), "at seq", seq.Seqno)
-						fmt.Println(Headers)
-						fmt.Println(testHeaders)
-						os.Exit(-1)
 						break
 					}
+
 				}
-			} else if args[1] == "-e" {
+			} else if len(os.Args) >= 2 && (os.Args[1] == "-e" || os.Args[1] == "-a") {
 				for _, seq := range jsontype.Cases {
-					Headers := []hpack.Header{}
-					for _, dict := range seq.Headers {
-						for k, v := range dict {
-							Headers = append(Headers, hpack.Header{k, v})
-						}
-					}
+					Headers := convertHeader(seq.Headers)
 					Wire := hpack.Encode(Headers, fStatic, fHeader, isHuffman, -1)
-					if Wire != seq.Wire {
-						storyPass = false
-						fmt.Println("False in", testCase+f.Name(), "at seq", seq.Seqno)
-						fmt.Println(Wire)
-						fmt.Println(seq.Wire)
-						os.Exit(-1)
-						break
-					}
-				}
-			} else if args[1] == "-a" {
-				for _, seq := range jsontype.Cases {
-					Headers := []hpack.Header{}
-					for _, dict := range seq.Headers {
-						for k, v := range dict {
-							Headers = append(Headers, hpack.Header{k, v})
+					if os.Args[1] == "-a" {
+						distHeaders := hpack.Decode(Wire)
+						compHeaders(distHeaders, Headers, &storyPass)
+						if !storyPass {
+							fmt.Println("False in", testCase+f.Name(), "at seq", seq.Seqno)
+							break
 						}
-					}
-					Wire := hpack.Encode(Headers, fStatic, fHeader, isHuffman, -1)
-					distHeaders := hpack.Decode(Wire)
-					if !reflect.DeepEqual(distHeaders, Headers) {
-						storyPass = false
-						fmt.Println("False in", testCase+f.Name(), "at seq", seq.Seqno)
-						fmt.Println(distHeaders)
-						fmt.Println(Headers)
-						os.Exit(-1)
-						break
+					} else {
+						compWire(Wire, seq.Wire, &storyPass)
+						if !storyPass {
+							fmt.Println("False in", testCase+f.Name(), "at seq", seq.Seqno)
+							break
+						}
 					}
 				}
 			} else {
-				fmt.Println("argument should be '-e' or '-d' or none")
+				fmt.Println("argument should be '-e', '-d', '-a' or none")
 				os.Exit(-1)
 			}
 			if storyPass {
