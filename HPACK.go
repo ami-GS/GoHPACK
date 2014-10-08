@@ -46,7 +46,7 @@ func PackContent(content string, toHuffman bool) string {
 	return Wire
 }
 
-func Encode(Headers []Header, fromStaticTable, fromHeaderTable, toHuffman bool, table Table, headerTableSize int) (Wire string) {
+func Encode(Headers []Header, fromStaticTable, fromHeaderTable, toHuffman bool, table *Table, headerTableSize int) (Wire string) {
 	if headerTableSize != -1 {
 		intRep := PackIntRepresentation(uint32(headerTableSize), 5)
 		(*intRep)[0] |= 0x20
@@ -156,7 +156,7 @@ func ParseHeader(index uint32, buf []byte, isIndexed bool, table *Table) (name, 
 	return
 }
 
-func Decode(wire string, table Table) (Headers []Header) {
+func Decode(wire string, table *Table) (Headers []Header) {
 	var buf *[]byte
 	nums, err := hex.DecodeString(string(wire))
 	if err != nil {
@@ -198,7 +198,7 @@ func Decode(wire string, table Table) (Headers []Header) {
 		}
 		cursor += c
 
-		name, value, c := ParseHeader(index, (*buf)[cursor:], isIndexed, &table)
+		name, value, c := ParseHeader(index, (*buf)[cursor:], isIndexed, table)
 		cursor += c
 
 		header := Header{name, value}

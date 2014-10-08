@@ -1,5 +1,7 @@
 package hpack
 
+import "fmt"
+
 type Header struct {
 	Name, Value string
 }
@@ -41,6 +43,7 @@ func (t *Table) FindHeader(h Header) (match bool, index int) {
 }
 
 func (t *Table) GetHeader(index uint32) Header {
+	fmt.Println(index, uint32(STATIC_TABLE_NUM+byte(t.info.currentEntryNum)))
 	if 0 < index && index < uint32(STATIC_TABLE_NUM) {
 		return (*STATIC_TABLE)[index]
 	} else if uint32(STATIC_TABLE_NUM) <= index && index <= uint32(STATIC_TABLE_NUM+byte(t.info.currentEntryNum)) {
@@ -51,7 +54,6 @@ func (t *Table) GetHeader(index uint32) Header {
 }
 
 type Table struct {
-	rTable     RingTable
 	head, tail *RingTable
 	info       Info
 }
@@ -68,7 +70,7 @@ type Info struct {
 }
 
 func InitTable() (table Table) {
-	ringTable := RingTable{Header{"", ""}, nil, nil}
+	var ringTable RingTable
 	table.head = &ringTable //*RingTalbe = &RingTable{Header{"", ""}, ringTable, nil}
 	table.tail = &ringTable //*RingTable = &RingTable{Header{"", ""}, nil, ringTable}
 
