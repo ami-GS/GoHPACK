@@ -82,6 +82,7 @@ func main() {
 	fmt.Println(hpack.ParseIntRepresentation(nums, 5))
 	huffman.Root.CreateTree()
 	for _, testCase := range TESTCASE {
+		table := hpack.InitTable()
 		fStatic, fHeader, isHuffman := EncType(testCase)
 		files, err := ioutil.ReadDir(testCase)
 		if err != nil {
@@ -98,7 +99,7 @@ func main() {
 
 			if len(os.Args) >= 2 && os.Args[1] == "-d" {
 				for _, seq := range jsontype.Cases {
-					Headers := hpack.Decode(seq.Wire)
+					Headers := hpack.Decode(seq.Wire, table)
 					correctHeaders := convertHeader(seq.Headers)
 					compHeaders(Headers, correctHeaders, &storyPass)
 					if !storyPass {
@@ -110,9 +111,9 @@ func main() {
 			} else if len(os.Args) >= 2 && (os.Args[1] == "-e" || os.Args[1] == "-a") {
 				for _, seq := range jsontype.Cases {
 					Headers := convertHeader(seq.Headers)
-					Wire := hpack.Encode(Headers, fStatic, fHeader, isHuffman, -1)
+					Wire := hpack.Encode(Headers, fStatic, fHeader, isHuffman, table, -1)
 					if os.Args[1] == "-a" {
-						distHeaders := hpack.Decode(Wire)
+						distHeaders := hpack.Decode(Wire, table)
 						compHeaders(distHeaders, Headers, &storyPass)
 						if !storyPass {
 							fmt.Println("False in", testCase+f.Name(), "at seq", seq.Seqno)

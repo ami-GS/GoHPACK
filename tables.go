@@ -8,7 +8,7 @@ func (h Header) size() uint32 {
 	return uint32(len(h.Name + h.Value))
 }
 
-func FindHeader(h Header) (match bool, index int) {
+func (t *Table) FindHeader(h Header) (match bool, index int) {
 	//here should be optimized
 	preName := ""
 	for i, header := range *STATIC_TABLE {
@@ -23,8 +23,8 @@ func FindHeader(h Header) (match bool, index int) {
 		}
 	}
 
-	ring := head
-	for i := 0; i < int(currentEntryNum); i++ {
+	ring := t.head
+	for i := 0; i < int(t.info.currentEntryNum); i++ {
 		if ring.header == h {
 			return true, i + int(STATIC_TABLE_NUM)
 		} else if ring.header.Name == h.Name && index == 0 {
@@ -40,14 +40,20 @@ func FindHeader(h Header) (match bool, index int) {
 	}
 }
 
-func GetHeader(index uint32) Header {
+func (t *Table) GetHeader(index uint32) Header {
 	if 0 < index && index < uint32(STATIC_TABLE_NUM) {
 		return (*STATIC_TABLE)[index]
-	} else if uint32(STATIC_TABLE_NUM) <= index && index <= uint32(STATIC_TABLE_NUM+byte(currentEntryNum)) {
-		return getFromHeaderTable(index) //from Header Table
+	} else if uint32(STATIC_TABLE_NUM) <= index && index <= uint32(STATIC_TABLE_NUM+byte(t.info.currentEntryNum)) {
+		return t.getFromHeaderTable(index) //from Header Table
 	} else {
 		panic("error")
 	}
+}
+
+type Table struct {
+	rTable     RingTable
+	head, tail *RingTable
+	info       Info
 }
 
 type RingTable struct {
@@ -55,18 +61,26 @@ type RingTable struct {
 	Next, Pre *RingTable
 }
 
-var ringTable RingTable
-var head *RingTable = &ringTable //*RingTalbe = &RingTable{Header{"", ""}, ringTable, nil}
-var tail *RingTable = &ringTable //*RingTable = &RingTable{Header{"", ""}, nil, ringTable}
+type Info struct {
+	currentEntrySize uint32
+	currentEntryNum  uint32
+	headerTableSize  uint32
+}
 
-var HeaderTable *[]Header
-var currentEntryNum uint16 = 0
-var currentEntrySize uint32 = 0
-var headerTableSize uint32 = 4096
+func InitTable() (table Table) {
+	ringTable := RingTable{Header{"", ""}, nil, nil}
+	table.head = &ringTable //*RingTalbe = &RingTable{Header{"", ""}, ringTable, nil}
+	table.tail = &ringTable //*RingTable = &RingTable{Header{"", ""}, nil, ringTable}
 
-func getFromHeaderTable(index uint32) Header {
+	table.info.currentEntryNum = 0
+	table.info.currentEntrySize = 0
+	table.info.headerTableSize = 4096
+	return
+}
+
+func (t *Table) getFromHeaderTable(index uint32) Header {
 	index -= uint32(STATIC_TABLE_NUM)
-	ring := head.Next
+	ring := t.head.Next
 	for i := uint32(0); i < index; i++ {
 		ring = ring.Next
 	}
@@ -75,36 +89,36 @@ func getFromHeaderTable(index uint32) Header {
 
 var nilElem *RingTable
 
-func delLast() {
-	currentEntrySize -= tail.Pre.header.size()
-	tail.Pre = tail.Pre.Pre
-	currentEntryNum--
+func (t *Table) delLast() {
+	t.info.currentEntrySize -= t.tail.Pre.header.size()
+	t.tail.Pre = t.tail.Pre.Pre
+	t.info.currentEntryNum--
 }
 
-func insertFirst(header Header) {
+func (t *Table) insertFirst(header Header) {
 	//here should be refactored
-	elem := RingTable{header, head.Next, nil}
-	if currentEntryNum >= 1 {
-		head.Next.Pre = &elem
+	elem := RingTable{header, t.head.Next, nil}
+	if t.info.currentEntryNum >= 1 {
+		t.head.Next.Pre = &elem
 	}
-	head.Next = &elem
+	t.head.Next = &elem
 
-	if currentEntryNum == 1 {
-		tail.Pre = &elem
+	if t.info.currentEntryNum == 1 {
+		t.tail.Pre = &elem
 	}
-	currentEntrySize += header.size()
-	currentEntryNum++
+	t.info.currentEntrySize += header.size()
+	t.info.currentEntryNum++
 }
 
-func AddHeader(header Header) {
-	for currentEntrySize+header.size() > headerTableSize {
-		delLast()
+func (t *Table) AddHeader(header Header) {
+	for t.info.currentEntrySize+header.size() > t.info.headerTableSize {
+		t.delLast()
 	}
-	insertFirst(header)
+	t.insertFirst(header)
 }
 
-func SetMaxHeaderTableSize(size uint32) {
-	headerTableSize = size
+func (t *Table) SetMaxHeaderTableSize(size uint32) {
+	t.info.headerTableSize = size
 }
 
 var STATIC_TABLE *[]Header = &[]Header{
