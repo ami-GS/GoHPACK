@@ -60,7 +60,7 @@ func compHeaders(decoded, correct []hpack.Header, storyPass *bool) {
 			fmt.Println(decoded)
 			fmt.Println(correct)
 		}
-		//os.Exit(-1)
+		os.Exit(-1)
 	}
 }
 
@@ -82,13 +82,14 @@ func main() {
 	fmt.Println(hpack.ParseIntRepresentation(nums, 5))
 	huffman.Root.CreateTree()
 	for _, testCase := range TESTCASE {
-		//encTable := hpack.InitTable()
 		fStatic, fHeader, isHuffman := EncType(testCase)
 		files, err := ioutil.ReadDir(testCase)
 		if err != nil {
 			panic(err)
 		}
 		for _, f := range files {
+			encTable := hpack.InitTable()
+			decTable := hpack.InitTable()
 			data, err := ioutil.ReadFile(testCase + f.Name())
 			if err != nil {
 				panic(err)
@@ -98,7 +99,6 @@ func main() {
 			storyPass := true
 
 			if len(os.Args) >= 2 && os.Args[1] == "-d" {
-				decTable := hpack.InitTable()
 				for _, seq := range jsontype.Cases {
 					Headers := hpack.Decode(seq.Wire, &decTable)
 					correctHeaders := convertHeader(seq.Headers)
@@ -110,14 +110,11 @@ func main() {
 
 				}
 			} else if len(os.Args) >= 2 && (os.Args[1] == "-e" || os.Args[1] == "-a") {
-				encTable := hpack.InitTable()
 				for _, seq := range jsontype.Cases {
 					Headers := convertHeader(seq.Headers)
-
 					Wire := hpack.Encode(Headers, fStatic, fHeader, isHuffman, &encTable, -1)
 					if os.Args[1] == "-a" {
-						encTable := hpack.InitTable()
-						distHeaders := hpack.Decode(Wire, &encTable)
+						distHeaders := hpack.Decode(Wire, &decTable)
 						compHeaders(distHeaders, Headers, &storyPass)
 						if !storyPass {
 							fmt.Println("False in", testCase+f.Name(), "at seq", seq.Seqno)

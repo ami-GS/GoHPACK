@@ -1,13 +1,30 @@
 package hpack
 
-import "fmt"
-
 type Header struct {
 	Name, Value string
 }
 
 func (h Header) size() uint32 {
 	return uint32(len(h.Name + h.Value))
+}
+
+type Table struct {
+	head, tail       *RingTable
+	currentEntrySize uint32
+	currentEntryNum  uint32
+	headerTableSize  uint32
+}
+
+type RingTable struct {
+	header    Header
+	Next, Pre *RingTable
+}
+
+func InitTable() (t Table) {
+	t.currentEntryNum = 0
+	t.currentEntrySize = 0
+	t.headerTableSize = 4096
+	return
 }
 
 func (t *Table) FindHeader(h Header) (match bool, index int) {
@@ -43,7 +60,6 @@ func (t *Table) FindHeader(h Header) (match bool, index int) {
 }
 
 func (t *Table) GetHeader(index uint32) Header {
-	fmt.Println(index, uint32(STATIC_TABLE_NUM+byte(t.currentEntryNum)))
 	if 0 < index && index < uint32(STATIC_TABLE_NUM) {
 		return (*STATIC_TABLE)[index]
 	} else if uint32(STATIC_TABLE_NUM) <= index && index <= uint32(STATIC_TABLE_NUM+byte(t.currentEntryNum)) {
@@ -53,32 +69,9 @@ func (t *Table) GetHeader(index uint32) Header {
 	}
 }
 
-type Table struct {
-	head, tail       *RingTable
-	currentEntrySize uint32
-	currentEntryNum  uint32
-	headerTableSize  uint32
-}
-
-type RingTable struct {
-	header    Header
-	Next, Pre *RingTable
-}
-
-func InitTable() (t Table) {
-	var ringTable RingTable
-	t.head = &ringTable //*RingTalbe = &RingTable{Header{"", ""}, ringTable, nil}
-	t.tail = &ringTable //*RingTable = &RingTable{Header{"", ""}, nil, ringTable}
-
-	t.currentEntryNum = 0
-	t.currentEntrySize = 0
-	t.headerTableSize = 4096
-	return
-}
-
 func (t *Table) getFromHeaderTable(index uint32) Header {
 	index -= uint32(STATIC_TABLE_NUM)
-	ring := t.head.Next
+	ring := t.head
 	for i := uint32(0); i < index; i++ {
 		ring = ring.Next
 	}
@@ -88,21 +81,25 @@ func (t *Table) getFromHeaderTable(index uint32) Header {
 var nilElem *RingTable
 
 func (t *Table) delLast() {
-	t.currentEntrySize -= t.tail.Pre.header.size()
-	t.tail.Pre = t.tail.Pre.Pre
+	t.currentEntrySize -= t.tail.header.size()
+	deleated := t.tail
+	t.tail = deleated.Pre
+	deleated = nilElem
 	t.currentEntryNum--
 }
 
 func (t *Table) insertFirst(header Header) {
 	//here should be refactored
-	elem := RingTable{header, t.head.Next, nil}
-	if t.currentEntryNum >= 1 {
-		t.head.Next.Pre = &elem
-	}
-	t.head.Next = &elem
+	elem := RingTable{header, nil, nil}
 
-	if t.currentEntryNum == 1 {
-		t.tail.Pre = &elem
+	if t.currentEntryNum >= 1 {
+		elem.Next = t.head
+		t.head.Pre = &elem
+	}
+	t.head = &elem
+
+	if t.currentEntryNum == 0 {
+		t.tail = &elem
 	}
 	t.currentEntryNum++
 	t.currentEntrySize += header.size()
