@@ -8,3 +8,11 @@ Pass test cases (hpack-test-case/haskell-http2...)
 
 ## Encode
 Pass test cases
+
+# Test
+```
+$ go run test <param (-e -d -a)>
+```
+* -e: encode test (this must emit error)
+* -d: decode test
+* -a: encode to decode test
