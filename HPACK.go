@@ -116,21 +116,15 @@ func ParseIntRepresentation(buf []byte, N byte) (I, cursor uint32) {
 	}
 }
 
-func ExtractContent(buf []byte, length uint32, isHuffman bool) string {
-	if isHuffman {
-		return huffman.Root.Decode(buf, length)
-	} else {
-		return string(buf[:length])
-	}
-}
-
 func ParseFromByte(buf []byte) (content string, cursor uint32) {
-	isHuffman := false
-	if buf[0]&0x80 > 0 {
-		isHuffman = true
-	}
 	length, cursor := ParseIntRepresentation(buf, 7)
-	content = ExtractContent(buf[cursor:], length, isHuffman)
+
+	if buf[0]&0x80 > 0 {
+		content = huffman.Root.Decode(buf[cursor:], length)
+	} else {
+		content = string(buf[cursor : cursor+length])
+	}
+
 	cursor += length
 	return
 }
