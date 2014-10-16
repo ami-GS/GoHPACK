@@ -60,7 +60,7 @@ func compHeaders(decoded, correct []hpack.Header, storyPass *bool) {
 			fmt.Println(decoded)
 			fmt.Println(correct)
 		}
-		os.Exit(-1)
+		//os.Exit(-1)
 	}
 }
 
