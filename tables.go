@@ -1,4 +1,4 @@
-package hpack
+package GoHPACK
 
 type Header struct {
 	Name, Value string

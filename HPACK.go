@@ -1,10 +1,10 @@
 //package main //for test
-package hpack
+package GoHPACK
 
 import (
 	"encoding/hex"
 	"fmt"
-	"huffman"
+	"github.com/ami-GS/GoHPACK/huffman"
 )
 
 func PackIntRepresentation(I uint32, N byte) (buf *[]byte) {
