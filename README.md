@@ -20,3 +20,6 @@ $ go run test <param (-e -d -a)>
 * -e: encode test (this must emit error)
 * -d: decode test
 * -a: encode to decode test
+
+#### License
+The MIT License (MIT) Copyright (c) 2014 ami-GS
