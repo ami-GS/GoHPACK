@@ -19,9 +19,10 @@ type jsonobject struct {
 }
 
 type Case struct {
-	Seqno   int
-	Wire    string
-	Headers []map[string]string
+	Seqno             int
+	Header_table_size uint32
+	Wire              string
+	Headers           []map[string]string
 }
 
 var TESTCASE = []string{
@@ -31,6 +32,11 @@ var TESTCASE = []string{
 	"hpack-test-case/haskell-http2-static-huffman/",
 	"hpack-test-case/haskell-http2-linear/",
 	"hpack-test-case/haskell-http2-linear-huffman/",
+	"hpack-test-case/go-hpack/",
+	"hpack-test-case/nghttp2/",
+	"hpack-test-case/nghttp2-16384-4096/",
+	"hpack-test-case/nghttp2-change-table-size/",
+	"hpack-test-case/node-http2-hpack/",
 }
 
 func EncType(testCase string) (fStatic, fHeader, isHuffman bool) {
@@ -111,6 +117,9 @@ func main() {
 				}
 			} else if len(os.Args) >= 2 && (os.Args[1] == "-e" || os.Args[1] == "-a") {
 				for _, seq := range jsontype.Cases {
+					if seq.Header_table_size != 0 {
+						encTable.SetMaxHeaderTableSize(seq.Header_table_size)
+					}
 					Headers := convertHeader(seq.Headers)
 					Wire := hpack.Encode(Headers, fStatic, fHeader, isHuffman, &encTable, -1)
 					if os.Args[1] == "-a" {
