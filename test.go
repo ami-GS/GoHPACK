@@ -118,7 +118,7 @@ func main() {
 			} else if len(os.Args) >= 2 && (os.Args[1] == "-e" || os.Args[1] == "-a") {
 				for _, seq := range jsontype.Cases {
 					if seq.Header_table_size != 0 {
-						encTable.SetMaxHeaderTableSize(seq.Header_table_size)
+						encTable.SetHeaderTableSize(seq.Header_table_size)
 					}
 					Headers := convertHeader(seq.Headers)
 					Wire := hpack.Encode(Headers, fStatic, fHeader, isHuffman, &encTable, -1)

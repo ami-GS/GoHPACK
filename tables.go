@@ -112,7 +112,7 @@ func (t *Table) AddHeader(header Header) {
 	t.insertFirst(header)
 }
 
-func (t *Table) SetMaxHeaderTableSize(size uint32) {
+func (t *Table) SetHeaderTableSize(size uint32) {
 	t.headerTableSize = size
 }
 

@@ -166,7 +166,7 @@ func Decode(wire string, table *Table) (Headers []Header) {
 		if (*buf)[cursor]&0xe0 == 0x20 {
 			// 7.3 Header Table Size Update
 			size, c := ParseIntRepresentation((*buf)[cursor:], 5)
-			table.SetMaxHeaderTableSize(size)
+			table.SetHeaderTableSize(size)
 			cursor += c
 		}
 
