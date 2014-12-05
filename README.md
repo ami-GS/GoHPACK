@@ -1,7 +1,7 @@
 GoHPACK
 =======
 
-HPACK implementation in Golang based on [draft 09](http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09 "draft 09")
+HPACK implementation in Golang based on [draft 10](http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10 "draft 10")
 
 ## Decode
 Pass test cases (hpack-test-case/haskell-http2...)

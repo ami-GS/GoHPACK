@@ -12,7 +12,7 @@ type Table struct {
 	head, tail       *RingTable
 	currentEntrySize uint32
 	currentEntryNum  uint32
-	headerTableSize  uint32
+	dynamicTableSize uint32
 }
 
 type RingTable struct {
@@ -23,7 +23,7 @@ type RingTable struct {
 func InitTable() (t Table) {
 	t.currentEntryNum = 0
 	t.currentEntrySize = 0
-	t.headerTableSize = 4096
+	t.dynamicTableSize = 4096
 	return
 }
 
@@ -63,13 +63,13 @@ func (t *Table) GetHeader(index uint32) Header {
 	if 0 < index && index < uint32(STATIC_TABLE_NUM) {
 		return (*STATIC_TABLE)[index]
 	} else if uint32(STATIC_TABLE_NUM) <= index && index <= uint32(STATIC_TABLE_NUM+byte(t.currentEntryNum)) {
-		return t.getFromHeaderTable(index) //from Header Table
+		return t.getFromDynamicTable(index) //from Header Table
 	} else {
 		panic("error")
 	}
 }
 
-func (t *Table) getFromHeaderTable(index uint32) Header {
+func (t *Table) getFromDynamicTable(index uint32) Header {
 	index -= uint32(STATIC_TABLE_NUM)
 	ring := t.head
 	for i := uint32(0); i < index; i++ {
@@ -106,14 +106,14 @@ func (t *Table) insertFirst(header Header) {
 }
 
 func (t *Table) AddHeader(header Header) {
-	for t.currentEntrySize+header.size() > t.headerTableSize {
+	for t.currentEntrySize+header.size() > t.dynamicTableSize {
 		t.delLast()
 	}
 	t.insertFirst(header)
 }
 
-func (t *Table) SetMaxHeaderTableSize(size uint32) {
-	t.headerTableSize = size
+func (t *Table) SetHeaderTableSize(size uint32) {
+	t.dynamicTableSize = size
 }
 
 var STATIC_TABLE *[]Header = &[]Header{
