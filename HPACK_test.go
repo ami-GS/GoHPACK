@@ -5,6 +5,7 @@ import (
 	"github.com/ami-GS/GoHPACK/huffman"
 	"io/ioutil"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -79,7 +80,52 @@ func TestDecode(t *testing.T) {
 			for _, seq := range jsontype.Cases {
 				actual := Decode(seq.Wire, &table)
 				expected := ConvertHeader(seq.Headers)
-				fmt.Println(actual, expected)
+				if !reflect.DeepEqual(actual, expected) {
+					t.Errorf("get %v\nwant %v", actual, expected)
+					t.Errorf("False in %s at seq %d", testCase+file.Name(), seq.Seqno)
+				}
+			}
+		}
+	}
+}
+
+func EncType(testCase string) (fStatic, fHeader, isHuffman bool) {
+	fHeader = strings.Contains(testCase, "linear")
+	if fHeader {
+		fStatic = true
+	} else {
+		fStatic = strings.Contains(testCase, "static")
+	}
+	isHuffman = strings.Contains(testCase, "huffman")
+	return
+}
+
+func TestEncode(t *testing.T) {
+	huffman.Root.CreateTree()
+	for _, testCase := range TESTCASES {
+		fStatic, fHeader, isHuffman := EncType(testCase)
+		files, err := ioutil.ReadDir(testCase)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, file := range files {
+			encTable := InitTable()
+			decTable := InitTable()
+			data, err := ioutil.ReadFile(testCase + file.Name())
+			if err != nil {
+				panic(err)
+			}
+			var jsontype jsonobject
+			json.Unmarshal(data, &jsontype)
+
+			for _, seq := range jsontype.Cases {
+				if seq.Header_table_size != 0 {
+					encTable.SetDynamicTableSize(seq.Header_table_size)
+				}
+				expected := ConvertHeader(seq.Headers)
+				wire := Encode(expected, fStatic, fHeader, isHuffman, &encTable, -1)
+				actual := Decode(wire, &decTable)
 				if !reflect.DeepEqual(actual, expected) {
 					t.Errorf("get %v\nwant %v", actual, expected)
 					t.Errorf("False in %s at seq %d", testCase+file.Name(), seq.Seqno)
