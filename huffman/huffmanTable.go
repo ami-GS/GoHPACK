@@ -10,7 +10,7 @@ type Node struct {
 	Code        int16
 }
 
-var HUFFMAN_TABLE *[257]HuffmanCode = &[257]HuffmanCode{
+var HUFFMAN_TABLE = &[...]HuffmanCode{
 	{0x1ff8, 13},
 	{0x7fffd8, 23},
 	{0xfffffe2, 28},
