@@ -7,17 +7,17 @@ import (
 	"github.com/ami-GS/GoHPACK/huffman"
 )
 
-func PackIntRepresentation(I uint32, N byte) (buf *[]byte) {
+func PackIntRepresentation(I uint32, N byte) (buf []byte) {
 	if I < uint32(1<<N)-1 {
-		return &[]byte{byte(I)}
+		return []byte{byte(I)}
 	} else {
-		buf = &[]byte{byte(1<<N) - 1}
+		buf = []byte{byte(1<<N) - 1}
 		I -= uint32(1<<N) - 1
 		for I >= 0x80 {
-			*buf = append(*buf, byte(I)&0x7f|0x80)
+			buf = append(buf, byte(I)&0x7f|0x80)
 			I = (I >> 7)
 		}
-		*buf = append(*buf, byte(I))
+		buf = append(buf, byte(I))
 		return buf
 	}
 }
@@ -35,13 +35,13 @@ func PackContent(content string, toHuffman bool) string {
 	if toHuffman {
 		encoded, length := huffman.Root.Encode(content)
 		intRep := PackIntRepresentation(uint32(length), 7)
-		(*intRep)[0] |= 0x80
+		intRep[0] |= 0x80
 
 		//Wire += hex.EncodeToString(*intRep) + strings.Trim(hex.EncodeToString(b), "00") // + encoded
-		Wire += hex.EncodeToString(*intRep) + hex.EncodeToString(encoded)
+		Wire += hex.EncodeToString(intRep) + hex.EncodeToString(encoded)
 	} else {
 		intRep := PackIntRepresentation(uint32(len(content)), 7)
-		Wire += hex.EncodeToString(*intRep) + hex.EncodeToString([]byte(content))
+		Wire += hex.EncodeToString(intRep) + hex.EncodeToString([]byte(content))
 	}
 	return Wire
 }
@@ -49,8 +49,8 @@ func PackContent(content string, toHuffman bool) string {
 func Encode(Headers []Header, fromStaticTable, fromDynamicTable, toHuffman bool, table *Table, dynamicTableSize int) (Wire string) {
 	if dynamicTableSize != -1 {
 		intRep := PackIntRepresentation(uint32(dynamicTableSize), 5)
-		(*intRep)[0] |= 0x20
-		Wire += hex.EncodeToString(*intRep)
+		intRep[0] |= 0x20
+		Wire += hex.EncodeToString(intRep)
 	}
 
 	for _, header := range Headers {
@@ -68,8 +68,8 @@ func Encode(Headers []Header, fromStaticTable, fromDynamicTable, toHuffman bool,
 				content = PackContent(header.Value, toHuffman)
 			}
 			intRep := PackIntRepresentation(uint32(index), indexLen)
-			(*intRep)[0] |= mask
-			Wire += hex.EncodeToString(*intRep) + content
+			intRep[0] |= mask
+			Wire += hex.EncodeToString(intRep) + content
 		} else if fromStaticTable && !match && index > 0 {
 			var indexLen, mask byte
 			if fromDynamicTable {
@@ -81,8 +81,8 @@ func Encode(Headers []Header, fromStaticTable, fromDynamicTable, toHuffman bool,
 				mask = 0x00
 			}
 			intRep := PackIntRepresentation(uint32(index), indexLen)
-			(*intRep)[0] |= mask
-			Wire += hex.EncodeToString(*intRep) + PackContent(header.Value, toHuffman)
+			intRep[0] |= mask
+			Wire += hex.EncodeToString(intRep) + PackContent(header.Value, toHuffman)
 		} else {
 			var prefix string
 			if fromDynamicTable {
@@ -151,48 +151,48 @@ func ParseHeader(index uint32, buf []byte, isIndexed bool, table *Table) (name, 
 }
 
 func Decode(wire string, table *Table) (Headers []Header) {
-	var buf *[]byte
+	var buf []byte
 	nums, err := hex.DecodeString(string(wire))
 	if err != nil {
 		panic(err)
 	}
-	buf = &nums
+	buf = nums
 
 	var cursor uint32 = 0
 	for cursor < uint32(len(nums)) {
 		isIndexed := false
 		isIncremental := false
 		var index, c uint32
-		if (*buf)[cursor]&0xe0 == 0x20 {
+		if buf[cursor]&0xe0 == 0x20 {
 			// 7.3 Header Table Size Update
-			size, c := ParseIntRepresentation((*buf)[cursor:], 5)
+			size, c := ParseIntRepresentation(buf[cursor:], 5)
 			table.SetDynamicTableSize(size)
 			cursor += c
 		}
 
-		if ((*buf)[cursor] & 0x80) > 0 {
+		if (buf[cursor] & 0x80) > 0 {
 			// 7.1 Indexed Header Field
-			if ((*buf)[cursor] & 0x7f) == 0 {
+			if (buf[cursor] & 0x7f) == 0 {
 				panic('a')
 			}
-			index, c = ParseIntRepresentation((*buf)[cursor:], 7)
+			index, c = ParseIntRepresentation(buf[cursor:], 7)
 			isIndexed = true
 		} else {
-			if (*buf)[cursor]&0xc0 == 0x40 {
+			if buf[cursor]&0xc0 == 0x40 {
 				// 7.2.1 Literal Header Field with Incremental Indexing
-				index, c = ParseIntRepresentation((*buf)[cursor:], 6)
+				index, c = ParseIntRepresentation(buf[cursor:], 6)
 				isIncremental = true
-			} else if (*buf)[cursor]&0xf0 == 0xf0 {
+			} else if buf[cursor]&0xf0 == 0xf0 {
 				// 7.2.3 Literal Header Field never Indexed
-				index, c = ParseIntRepresentation((*buf)[cursor:], 4)
+				index, c = ParseIntRepresentation(buf[cursor:], 4)
 			} else {
 				// 7.2.2 Literal Header Field without Indexing
-				index, c = ParseIntRepresentation((*buf)[cursor:], 4)
+				index, c = ParseIntRepresentation(buf[cursor:], 4)
 			}
 		}
 		cursor += c
 
-		name, value, c := ParseHeader(index, (*buf)[cursor:], isIndexed, table)
+		name, value, c := ParseHeader(index, buf[cursor:], isIndexed, table)
 		cursor += c
 
 		header := Header{name, value}

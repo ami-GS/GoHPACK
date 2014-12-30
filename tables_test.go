@@ -28,7 +28,7 @@ func TestInitTable(t *testing.T) {
 // TODO: DynamicTable should also be tested
 func TestFindHeader(t *testing.T) {
 	table := InitTable()
-	for i, header := range *STATIC_TABLE {
+	for i, header := range STATIC_TABLE {
 		actualB, actualI := table.FindHeader(header)
 		expectedB := true
 		expectedI := i
@@ -45,7 +45,7 @@ func TestGetHeader(t *testing.T) {
 	table := InitTable()
 	for i := 1; byte(i) < STATIC_TABLE_NUM; i++ {
 		actual := table.GetHeader(uint32(i))
-		expected := (*STATIC_TABLE)[i]
+		expected := STATIC_TABLE[i]
 		if !reflect.DeepEqual(actual, expected) {
 			t.Errorf("got %v\nwant %v", actual, expected)
 		}

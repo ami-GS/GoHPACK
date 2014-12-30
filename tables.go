@@ -30,7 +30,7 @@ func InitTable() (t Table) {
 func (t *Table) FindHeader(h Header) (match bool, index int) {
 	//here should be optimized
 	preName := ""
-	for i, header := range *STATIC_TABLE {
+	for i, header := range STATIC_TABLE {
 		if header == h {
 			return true, i
 		} else if header.Name == h.Name && index == 0 {
@@ -61,7 +61,7 @@ func (t *Table) FindHeader(h Header) (match bool, index int) {
 
 func (t *Table) GetHeader(index uint32) Header {
 	if 0 < index && index < uint32(STATIC_TABLE_NUM) {
-		return (*STATIC_TABLE)[index]
+		return STATIC_TABLE[index]
 	} else if uint32(STATIC_TABLE_NUM) <= index && index <= uint32(STATIC_TABLE_NUM+byte(t.currentEntryNum)) {
 		return t.getFromDynamicTable(index) //from Header Table
 	} else {
@@ -116,7 +116,7 @@ func (t *Table) SetDynamicTableSize(size uint32) {
 	t.dynamicTableSize = size
 }
 
-var STATIC_TABLE *[]Header = &[]Header{
+var STATIC_TABLE = &[...]Header{
 	{"", ""},
 	{":authority", ""},
 	{":method", "GET"},
@@ -180,4 +180,4 @@ var STATIC_TABLE *[]Header = &[]Header{
 	{"via", ""},
 	{"www-authenticate", ""},
 }
-var STATIC_TABLE_NUM byte = byte(len(*STATIC_TABLE))
+var STATIC_TABLE_NUM byte = byte(len(STATIC_TABLE))
