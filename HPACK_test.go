@@ -1,6 +1,7 @@
 package GoHPACK
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"github.com/ami-GS/GoHPACK/huffman"
 	"io/ioutil"
@@ -78,7 +79,11 @@ func TestDecode(t *testing.T) {
 			json.Unmarshal(data, &jsontype)
 
 			for _, seq := range jsontype.Cases {
-				actual := Decode(seq.Wire, &table)
+				buf, err := hex.DecodeString(seq.Wire)
+				if err != nil {
+					panic(err)
+				}
+				actual := Decode(buf, &table)
 				expected := ConvertHeader(seq.Headers)
 				if !reflect.DeepEqual(actual, expected) {
 					t.Errorf("get %v\nwant %v", actual, expected)
@@ -124,8 +129,8 @@ func TestEncode(t *testing.T) {
 					encTable.SetDynamicTableSize(seq.Header_table_size)
 				}
 				expected := ConvertHeader(seq.Headers)
-				wire := Encode(expected, fStatic, fHeader, isHuffman, &encTable, -1)
-				actual := Decode(wire, &decTable)
+				buf := Encode(expected, fStatic, fHeader, isHuffman, &encTable, -1)
+				actual := Decode(buf, &decTable)
 				if !reflect.DeepEqual(actual, expected) {
 					t.Errorf("get %v\nwant %v", actual, expected)
 					t.Errorf("False in %s at seq %d", testCase+file.Name(), seq.Seqno)
