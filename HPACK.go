@@ -50,7 +50,7 @@ func Encode(Headers []Header, fromStaticTable, fromDynamicTable, toHuffman bool,
 	if dynamicTableSize != -1 {
 		intRep := PackIntRepresentation(uint32(dynamicTableSize), 5)
 		intRep[0] |= 0x20
-		Wire = append(Wire, intRep...)
+		Wire = intRep
 	}
 
 	for _, header := range Headers {
