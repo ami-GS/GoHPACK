@@ -20,7 +20,7 @@ type RingTable struct {
 	Next, Pre *RingTable
 }
 
-func InitTable() (t Table) {
+func NewTable() (t Table) {
 	t.currentEntryNum = 0
 	t.currentEntrySize = 0
 	t.dynamicTableSize = 4096

@@ -70,7 +70,7 @@ func TestDecode(t *testing.T) {
 		}
 
 		for _, file := range files {
-			table := InitTable()
+			table := NewTable()
 			data, err := ioutil.ReadFile(testCase + file.Name())
 			if err != nil {
 				panic(err)
@@ -115,8 +115,8 @@ func TestEncode(t *testing.T) {
 		}
 
 		for _, file := range files {
-			encTable := InitTable()
-			decTable := InitTable()
+			encTable := NewTable()
+			decTable := NewTable()
 			data, err := ioutil.ReadFile(testCase + file.Name())
 			if err != nil {
 				panic(err)
