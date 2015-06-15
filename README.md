@@ -15,7 +15,7 @@ $ go get github.com/ami-GS/GoHPACK
 $ cd $GOPATH/src/github.com/ami-GS/
 $ mv GoHPACK/test.go .
 $ git clone https://github.com/http2jp/hpack-test-case
-$ go run test <param (-e -d -a)>
+$ go run test [-e -d -a]
 ```
 * -e: encode test (this must emit error)
 * -d: decode test
