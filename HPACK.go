@@ -9,16 +9,26 @@ import (
 func PackIntRepresentation(I uint32, N byte) (buf []byte) {
 	if I < uint32(1<<N)-1 {
 		return []byte{byte(I)}
-	} else {
-		buf = []byte{byte(1<<N) - 1}
-		I -= uint32(1<<N) - 1
-		for I >= 0x80 {
-			buf = append(buf, byte(I)&0x7f|0x80)
-			I = (I >> 7)
-		}
-		buf = append(buf, byte(I))
-		return buf
 	}
+
+	I -= uint32(1<<N) - 1
+	var i int = 1
+	tmpI := I
+	for ; tmpI >= 128; i++ {
+		tmpI = tmpI >> 7
+	} // check length
+
+	buf = make([]byte, i+1)
+	buf[0] = byte(1<<N) - 1
+	i = 1
+	for ; I >= 0x80; i++ {
+		buf[i] = (byte(I) & 0x7f) | 0x80
+		I = I >> 7
+	}
+	buf[i] = byte(I)
+
+	return buf
+
 }
 
 func PackContent(content string, toHuffman bool) []byte {
@@ -104,16 +114,17 @@ func ParseIntRepresentation(buf []byte, N byte) (I, cursor uint32) {
 	cursor = 1
 	if I < ((1 << N) - 1) {
 		return I, cursor
-	} else {
-		var M byte = 0
-		for (buf[cursor] & 0x80) > 0 {
-			I += uint32(buf[cursor]&0x7f) * (1 << M)
-			M += 7
-			cursor += 1
-		}
-		I += uint32(buf[cursor]&0x7f) * (1 << M)
-		return I, cursor + 1
 	}
+
+	var M byte = 0
+	for (buf[cursor] & 0x80) > 0 {
+		I += uint32(buf[cursor]&0x7f) * (1 << M)
+		M += 7
+		cursor += 1
+	}
+	I += uint32(buf[cursor]&0x7f) * (1 << M)
+	return I, cursor + 1
+
 }
 
 func ParseFromByte(buf []byte) (content string, cursor uint32) {
