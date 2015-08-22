@@ -208,12 +208,3 @@ func Decode(buf []byte, table *Table) (Headers []Header) {
 
 	return
 }
-
-func main() {
-	//nums, _ := hex.DecodeString(string("1FA18DB701"))
-	//fmt.Println(nums)
-	//fmt.Println(ParseIntRepresentation(nums, 5))
-	//decode("ff80000111")
-	//fmt.Println(Decode("00073a6d6574686f640347455400073a736368656d650468747470000a3a617574686f726974790f7777772e7961686f6f2e636f2e6a7000053a70617468012f"))
-	fmt.Println(huffman.HUFFMAN_TABLE)
-}
