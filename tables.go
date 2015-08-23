@@ -54,9 +54,8 @@ func (t *Table) FindHeader(h Header) (match bool, index int) {
 	}
 	if index > 0 {
 		return match, index
-	} else {
-		return false, -1
 	}
+	return false, -1 // not found on any table
 }
 
 func (t *Table) GetHeader(index uint32) Header {
