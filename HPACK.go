@@ -1,8 +1,6 @@
-//package main //for test
 package GoHPACK
 
 import (
-	"fmt"
 	"github.com/ami-GS/GoHPACK/huffman"
 )
 
