@@ -33,9 +33,8 @@ func PackContent(content string, toHuffman bool) []byte {
 	if len(content) == 0 {
 		if toHuffman {
 			return []byte{0x80}
-		} else {
-			return []byte{0x00}
 		}
+		return []byte{0x00}
 	}
 
 	var Wire []byte
@@ -46,12 +45,11 @@ func PackContent(content string, toHuffman bool) []byte {
 		intRep[0] |= 0x80
 
 		//Wire += hex.EncodeToString(*intRep) + strings.Trim(hex.EncodeToString(b), "00") // + encoded
-		Wire = append(append(Wire, intRep...), encoded...)
-	} else {
-		intRep := PackIntRepresentation(uint32(len(content)), 7)
-		Wire = append(append(Wire, intRep...), []byte(content)...)
+		return append(append(Wire, intRep...), encoded...)
 	}
-	return Wire
+
+	intRep := PackIntRepresentation(uint32(len(content)), 7)
+	return append(append(Wire, intRep...), []byte(content)...)
 }
 
 func Encode(Headers []Header, fromStaticTable, fromDynamicTable, toHuffman bool, table *Table, dynamicTableSize int) (Wire []byte) {
@@ -64,40 +62,35 @@ func Encode(Headers []Header, fromStaticTable, fromDynamicTable, toHuffman bool,
 	for _, header := range Headers {
 		match, index := table.FindHeader(header)
 		if fromStaticTable && match {
-			var indexLen, mask byte
+			var indexLen byte = 4
+			var mask byte = 0x00
 			var content []byte
 			if fromDynamicTable {
 				indexLen = 7
 				mask = 0x80
 				content = []byte{}
 			} else {
-				indexLen = 4
-				mask = 0x00
 				content = PackContent(header.Value, toHuffman)
 			}
 			intRep := PackIntRepresentation(uint32(index), indexLen)
 			intRep[0] |= mask
 			Wire = append(append(Wire, intRep...), content...)
 		} else if fromStaticTable && !match && index > 0 {
-			var indexLen, mask byte
+			var indexLen byte = 4
+			var mask byte = 0x00
 			if fromDynamicTable {
 				indexLen = 6
 				mask = 0x40
 				table.AddHeader(header)
-			} else {
-				indexLen = 4
-				mask = 0x00
 			}
 			intRep := PackIntRepresentation(uint32(index), indexLen)
 			intRep[0] |= mask
 			Wire = append(append(Wire, intRep...), PackContent(header.Value, toHuffman)...)
 		} else {
-			var prefix []byte
+			var prefix []byte = []byte{0x00}
 			if fromDynamicTable {
 				prefix = []byte{0x40}
 				table.AddHeader(header)
-			} else {
-				prefix = []byte{0x00}
 			}
 			content := append(PackContent(header.Name, toHuffman), PackContent(header.Value, toHuffman)...)
 			Wire = append(append(Wire, prefix...), content...)
