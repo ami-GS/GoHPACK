@@ -87,13 +87,13 @@ func Encode(Headers []Header, fromStaticTable, fromDynamicTable, toHuffman bool,
 			intRep[0] |= mask
 			Wire = append(append(Wire, intRep...), PackContent(header.Value, toHuffman)...)
 		} else {
-			var prefix []byte = []byte{0x00}
+			var prefix byte = 0x00
 			if fromDynamicTable {
-				prefix = []byte{0x40}
+				prefix = 0x40
 				table.AddHeader(header)
 			}
 			content := append(PackContent(header.Name, toHuffman), PackContent(header.Value, toHuffman)...)
-			Wire = append(append(Wire, prefix...), content...)
+			Wire = append(append(Wire, prefix), content...)
 		}
 	}
 
