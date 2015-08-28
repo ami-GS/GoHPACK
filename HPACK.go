@@ -54,38 +54,33 @@ func PackContent(content string, toHuffman bool) []byte {
 
 func Encode(Headers []Header, fromStaticTable, fromDynamicTable, toHuffman bool, table *Table, dynamicTableSize int) (Wire []byte) {
 	if dynamicTableSize != -1 {
-		intRep := PackIntRepresentation(uint32(dynamicTableSize), 5)
-		intRep[0] |= 0x20
-		Wire = intRep
+		Wire = PackIntRepresentation(uint32(dynamicTableSize), 5)
+		Wire[0] |= 0x20
 	}
 
 	for _, header := range Headers {
 		match, index := table.FindHeader(header)
 		if fromStaticTable && match {
-			var indexLen byte = 4
-			var mask byte = 0x00
-			var content []byte
 			if fromDynamicTable {
-				indexLen = 7
-				mask = 0x80
-				content = []byte{}
+				intRep := PackIntRepresentation(uint32(index), 7)
+				intRep[0] |= 0x80
+				Wire = append(Wire, intRep...)
 			} else {
-				content = PackContent(header.Value, toHuffman)
+				intRep := PackIntRepresentation(uint32(index), 4)
+				Wire = append(append(Wire, intRep...),
+					PackContent(header.Value, toHuffman)...)
 			}
-			intRep := PackIntRepresentation(uint32(index), indexLen)
-			intRep[0] |= mask
-			Wire = append(append(Wire, intRep...), content...)
 		} else if fromStaticTable && !match && index > 0 {
-			var indexLen byte = 4
-			var mask byte = 0x00
+			var intRep []byte
 			if fromDynamicTable {
-				indexLen = 6
-				mask = 0x40
+				intRep = PackIntRepresentation(uint32(index), 6)
+				intRep[0] |= 0x40
 				table.AddHeader(header)
+			} else {
+				intRep = PackIntRepresentation(uint32(index), 4)
 			}
-			intRep := PackIntRepresentation(uint32(index), indexLen)
-			intRep[0] |= mask
-			Wire = append(append(Wire, intRep...), PackContent(header.Value, toHuffman)...)
+			Wire = append(append(Wire, intRep...),
+				PackContent(header.Value, toHuffman)...)
 		} else {
 			var prefix byte = 0x00
 			if fromDynamicTable {
