@@ -156,8 +156,6 @@ func Decode(buf []byte, table *Table) (Headers []Header) {
 	var cursor uint32 = 0
 	for cursor < uint32(len(buf)) {
 		isIndexed := false
-		isIncremental := false
-		var index, c uint32
 		if buf[cursor]&0xe0 == 0x20 {
 			// 7.3 Header Table Size Update
 			size, c := ParseIntRepresentation(buf[cursor:], 5)
@@ -165,33 +163,31 @@ func Decode(buf []byte, table *Table) (Headers []Header) {
 			cursor += c
 		}
 
+		var nLen byte
 		if (buf[cursor] & 0x80) > 0 {
 			// 7.1 Indexed Header Field
 			if (buf[cursor] & 0x7f) == 0 {
 				panic('a')
 			}
-			index, c = ParseIntRepresentation(buf[cursor:], 7)
+			nLen = 7
 			isIndexed = true
 		} else {
 			if buf[cursor]&0xc0 == 0x40 {
 				// 7.2.1 Literal Header Field with Incremental Indexing
-				index, c = ParseIntRepresentation(buf[cursor:], 6)
-				isIncremental = true
-			} else if buf[cursor]&0xf0 == 0xf0 {
-				// 7.2.3 Literal Header Field never Indexed
-				index, c = ParseIntRepresentation(buf[cursor:], 4)
+				nLen = 6
 			} else {
+				// when buf[cursor]&0xf0 == 0xf0
 				// 7.2.2 Literal Header Field without Indexing
-				index, c = ParseIntRepresentation(buf[cursor:], 4)
+				// else
+				// 7.2.3 Literal Header Field never Indexed
+				nLen = 4
 			}
 		}
-		cursor += c
-
-		name, value, c := ParseHeader(index, buf[cursor:], isIndexed, table)
-		cursor += c
-
+		index, c1 := ParseIntRepresentation(buf[cursor:], nLen)
+		name, value, c2 := ParseHeader(index, buf[cursor+c1:], isIndexed, table)
+		cursor += c1 + c2
 		header := Header{name, value}
-		if isIncremental {
+		if nLen == 6 {
 			table.AddHeader(header)
 		}
 		Headers = append(Headers, header)
