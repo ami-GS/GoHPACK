@@ -37,7 +37,6 @@ func PackContent(content string, toHuffman bool) []byte {
 		return []byte{0x00}
 	}
 
-	var Wire []byte
 	if toHuffman {
 
 		encoded, length := huffman.Root.Encode(content)
@@ -45,11 +44,11 @@ func PackContent(content string, toHuffman bool) []byte {
 		intRep[0] |= 0x80
 
 		//Wire += hex.EncodeToString(*intRep) + strings.Trim(hex.EncodeToString(b), "00") // + encoded
-		return append(append(Wire, intRep...), encoded...)
+		return append(intRep, encoded...)
 	}
 
 	intRep := PackIntRepresentation(uint32(len(content)), 7)
-	return append(append(Wire, intRep...), []byte(content)...)
+	return append(intRep, []byte(content)...)
 }
 
 func Encode(Headers []Header, fromStaticTable, fromDynamicTable, toHuffman bool, table *Table, dynamicTableSize int) (Wire []byte) {
