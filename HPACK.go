@@ -30,13 +30,6 @@ func PackIntRepresentation(I uint32, N byte) (buf []byte) {
 }
 
 func PackContent(content string, toHuffman bool) []byte {
-	if len(content) == 0 {
-		if toHuffman {
-			return []byte{0x80}
-		}
-		return []byte{0x00}
-	}
-
 	if toHuffman {
 
 		encoded, length := huffman.Root.Encode(content)
