@@ -63,9 +63,9 @@ func (t *Table) GetHeader(index uint32) Header {
 		return STATIC_TABLE[index]
 	} else if uint32(STATIC_TABLE_NUM) <= index && index <= uint32(STATIC_TABLE_NUM+byte(t.currentEntryNum)) {
 		return t.getFromDynamicTable(index) //from Header Table
-	} else {
-		panic("error")
 	}
+
+	panic("error")
 }
 
 func (t *Table) getFromDynamicTable(index uint32) Header {
