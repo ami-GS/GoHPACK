@@ -1,5 +1,9 @@
 package GoHPACK
 
+import (
+	"github.com/ami-GS/GoHPACK/huffman"
+)
+
 type Header struct {
 	Name, Value string
 }
@@ -13,6 +17,7 @@ type Table struct {
 	currentEntrySize uint32
 	currentEntryNum  uint32
 	dynamicTableSize uint32
+	Huffman          *huffman.Node
 }
 
 type RingTable struct {
@@ -24,6 +29,8 @@ func NewTable() (t Table) {
 	t.currentEntryNum = 0
 	t.currentEntrySize = 0
 	t.dynamicTableSize = 4096
+	t.Huffman = &huffman.Node{nil, nil, -1} // temporally
+	t.Huffman.CreateTree()
 	return
 }
 

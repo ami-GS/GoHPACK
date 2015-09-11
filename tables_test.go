@@ -7,7 +7,13 @@ import (
 
 func TestNewTable(t *testing.T) {
 	actual := NewTable()
-	expected := Table{nil, nil, 0, 0, 4096}
+	expected := Table{
+		head:             nil,
+		tail:             nil,
+		currentEntrySize: 0,
+		currentEntryNum:  0,
+		dynamicTableSize: 4096,
+	}
 	if actual.head != expected.head {
 		t.Errorf("got %v\nwant %v", actual.head, expected.head)
 	}

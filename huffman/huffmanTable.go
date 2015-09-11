@@ -270,9 +270,8 @@ var HUFFMAN_TABLE = &[...]HuffmanCode{
 	{0x3fffffff, 30},
 }
 
-var Root Node = Node{nil, nil, -1}
-
 func (root *Node) CreateTree() {
+	//root = &Node{nil, nil, -1} // doesn't work
 	for code, huff := range HUFFMAN_TABLE {
 		cursor := root
 		for i := huff.BitLen; i > 0; i-- {

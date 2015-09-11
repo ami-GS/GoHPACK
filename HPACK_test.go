@@ -3,7 +3,6 @@ package GoHPACK
 import (
 	"encoding/hex"
 	"encoding/json"
-	"github.com/ami-GS/GoHPACK/huffman"
 	"io/ioutil"
 	"reflect"
 	"strings"
@@ -62,7 +61,6 @@ func ConvertHeader(headers []map[string]string) (dist []Header) {
 }
 
 func TestDecode(t *testing.T) {
-	huffman.Root.CreateTree()
 	for _, testCase := range TESTCASES {
 		files, err := ioutil.ReadDir(testCase)
 		if err != nil {
@@ -106,7 +104,6 @@ func EncType(testCase string) (fStatic, fHeader, isHuffman bool) {
 }
 
 func TestEncode(t *testing.T) {
-	huffman.Root.CreateTree()
 	for _, testCase := range TESTCASES {
 		fStatic, fHeader, isHuffman := EncType(testCase)
 		files, err := ioutil.ReadDir(testCase)
