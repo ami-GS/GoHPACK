@@ -25,21 +25,6 @@ func PackIntRepresentation(I uint32, N byte) (buf []byte) {
 
 }
 
-func (t *Table) PackContent(content string, toHuffman bool) []byte {
-	if toHuffman {
-
-		encoded, length := t.Huffman.Encode(content)
-		intRep := PackIntRepresentation(uint32(length), 7)
-		intRep[0] |= 0x80
-
-		//Wire += hex.EncodeToString(*intRep) + strings.Trim(hex.EncodeToString(b), "00") // + encoded
-		return append(intRep, encoded...)
-	}
-
-	intRep := PackIntRepresentation(uint32(len(content)), 7)
-	return append(intRep, []byte(content)...)
-}
-
 func Encode(Headers []Header, fromStaticTable, fromDynamicTable, toHuffman bool, table *Table, dynamicTableSize int) (Wire []byte) {
 	if dynamicTableSize != -1 {
 		Wire = PackIntRepresentation(uint32(dynamicTableSize), 5)
@@ -100,40 +85,6 @@ func ParseIntRepresentation(buf []byte, N byte) (I, cursor uint32) {
 	I += uint32(buf[cursor]&0x7f) * (1 << M)
 	return I, cursor + 1
 
-}
-
-func (t *Table) ParseFromByte(buf []byte) (content string, cursor uint32) {
-	length, cursor := ParseIntRepresentation(buf, 7)
-
-	if buf[0]&0x80 > 0 {
-		content = t.Huffman.Decode(buf[cursor:], length)
-	} else {
-		content = string(buf[cursor : cursor+length])
-	}
-
-	cursor += length
-	return
-}
-
-func (table *Table) ParseHeader(index uint32, buf []byte, isIndexed bool) (name, value string, cursor uint32) {
-	if c := uint32(0); !isIndexed {
-		if index == 0 {
-			name, c = table.ParseFromByte(buf[cursor:])
-			cursor += c
-		}
-		value, c = table.ParseFromByte(buf[cursor:])
-		cursor += c
-	}
-
-	if index > 0 {
-		header := table.GetHeader(index)
-
-		name = header.Name
-		if len(value) == 0 {
-			value = header.Value
-		}
-	}
-	return
 }
 
 func Decode(buf []byte, table *Table) (Headers []Header) {

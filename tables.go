@@ -114,12 +114,50 @@ func (t *Table) insertFirst(header Header) {
 func (t *Table) AddHeader(header Header) {
 	for t.currentEntrySize+header.size() > t.dynamicTableSize {
 		t.delLast()
+
+func (t *Table) PackContent(content string, toHuffman bool) []byte {
+	if toHuffman {
+		encoded, length := t.Huffman.Encode(content)
+		intRep := PackIntRepresentation(uint32(length), 7)
+		intRep[0] |= 0x80
+		return append(intRep, encoded...)
 	}
-	t.insertFirst(header)
+	intRep := PackIntRepresentation(uint32(len(content)), 7)
+	return append(intRep, []byte(content)...)
 }
 
 func (t *Table) SetDynamicTableSize(size uint32) {
 	t.dynamicTableSize = size
+func (t *Table) ParseFromByte(buf []byte) (content string, cursor uint32) {
+	length, cursor := ParseIntRepresentation(buf, 7)
+
+	if buf[0]&0x80 > 0 {
+		content = t.Huffman.Decode(buf[cursor:], length)
+	} else {
+		content = string(buf[cursor : cursor+length])
+	}
+	cursor += length
+	return
+}
+
+func (table *Table) ParseHeader(index uint32, buf []byte, isIndexed bool) (name, value string, cursor uint32) {
+	if c := uint32(0); !isIndexed {
+		if index == 0 {
+			name, c = table.ParseFromByte(buf[cursor:])
+			cursor += c
+		}
+		value, c = table.ParseFromByte(buf[cursor:])
+		cursor += c
+	}
+
+	if index > 0 {
+		header := table.GetHeader(index)
+		name = header.Name
+		if len(value) == 0 {
+			value = header.Value
+		}
+	}
+	return
 }
 
 var STATIC_TABLE = &[...]Header{
