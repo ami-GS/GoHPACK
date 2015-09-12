@@ -80,15 +80,6 @@ func (t *Table) GetHeader(index uint32) Header {
 	panic("error")
 }
 
-func (t *Table) getFromDynamicTable(index uint32) Header {
-	index -= uint32(STATIC_TABLE_NUM)
-	ring := t.head
-	for i := uint32(0); i < index; i++ {
-		ring = ring.Next
-	}
-	return ring.header
-}
-
 var nilElem *RingTable
 
 func (t *Table) delLast() {
