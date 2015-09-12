@@ -99,10 +99,12 @@ func (t *Table) delLast() {
 	t.currentEntryNum--
 }
 
-func (t *Table) insertFirst(header Header) {
-	//here should be refactored
+func (t *Table) AddHeader(header Header) {
+	for t.currentEntrySize+header.size() > t.dynamicTableSize {
+		t.delLast()
+	}
+	// insert first
 	elem := RingTable{header, nil, nil}
-
 	if t.currentEntryNum >= 1 {
 		elem.Next = t.head
 		t.head.Pre = &elem
@@ -116,9 +118,6 @@ func (t *Table) insertFirst(header Header) {
 	t.currentEntrySize += header.size()
 }
 
-func (t *Table) AddHeader(header Header) {
-	for t.currentEntrySize+header.size() > t.dynamicTableSize {
-		t.delLast()
 
 func (t *Table) PackContent(content string, toHuffman bool) []byte {
 	if toHuffman {
