@@ -122,11 +122,12 @@ func TestEncode(t *testing.T) {
 			json.Unmarshal(data, &jsontype)
 
 			for _, seq := range jsontype.Cases {
-				if seq.Header_table_size != 0 {
-					encTable.SetDynamicTableSize(seq.Header_table_size)
+				var d_table_size int = int(seq.Header_table_size)
+				if d_table_size == 0 {
+					d_table_size = -1
 				}
 				expected := ConvertHeader(seq.Headers)
-				buf := Encode(expected, fStatic, fHeader, isHuffman, &encTable, -1)
+				buf := Encode(expected, fStatic, fHeader, isHuffman, &encTable, d_table_size)
 				actual := Decode(buf, &decTable)
 				if !reflect.DeepEqual(actual, expected) {
 					t.Errorf("get %v\nwant %v", actual, expected)
