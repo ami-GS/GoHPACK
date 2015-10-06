@@ -99,7 +99,11 @@ func EncType(testCase string) (fStatic, fHeader, isHuffman bool) {
 	} else {
 		fStatic = strings.Contains(testCase, "static")
 	}
-	isHuffman = strings.Contains(testCase, "huffman")
+	if strings.Contains(testCase, "haskell") {
+		isHuffman = strings.Contains(testCase, "huffman")
+	} else {
+		isHuffman = true
+	}
 	return
 }
 
