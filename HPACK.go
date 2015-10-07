@@ -26,7 +26,7 @@ func PackIntRepresentation(I uint32, N byte) (buf []byte) {
 }
 
 func Encode(Headers []Header, fromStaticTable, fromDynamicTable, toHuffman bool, table *Table, dynamicTableSize int) (Wire []byte) {
-	if dynamicTableSize != -1 {
+	if dynamicTableSize != -1 && int(table.dynamicTableSize) != dynamicTableSize {
 		table.SetDynamicTableSize(uint32(dynamicTableSize))
 		Wire = PackIntRepresentation(uint32(dynamicTableSize), 5)
 		Wire[0] |= 0x20
